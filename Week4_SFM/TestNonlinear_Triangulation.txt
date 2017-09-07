@@ -1,0 +1,33 @@
+K = [ 100 0 10; 0 100 11; 0 0 1 ]; % Arbitrary K matrix
+
+[R1,~] = qr(randn(3,3));
+C1 = -R1'*randn(3,1);
+[R2,~] = qr(randn(3,3));
+C2 = -R2'*randn(3,1);
+[R3,~] = qr(randn(3,3));
+C3 = -R3'*randn(3,1);
+
+N = 10;
+X = zeros(N,3);
+X_noise = zeros(N,3);
+x1 = zeros(N,2);
+x2 = zeros(N,2);
+x3 = zeros(N,2);
+for i = 1:N
+    Xi = randn(3,1);
+    Xi = sign(Xi(3))*Xi; % Positive depth
+    X(i,:) = Xi;
+    X_noise(i,:) = Xi + 0.2*randn(3,1); % Noisy version
+    % You could also add a stronger bias to see how it does
+    proj = @(x) x(1:2)/x(3);
+    sigma = 0.1; % No noise for now - can add it later
+    x1(i,:) = proj(K*R1*(Xi - C1)) + sigma*randn(2,1);
+    x2(i,:) = proj(K*R2*(Xi - C2)) + sigma*randn(2,1);
+    x3(i,:) = proj(K*R3*(Xi - C3)) + sigma*randn(2,1);
+end
+
+X_est = Nonlinear_Triangulation(...
+          K, C1, R1, C2, R2, C3, R3, ...
+          x1, x2, x3, X_noise);
+
+disp(X_est - X);
